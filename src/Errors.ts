@@ -50,6 +50,26 @@ export class XmltvParseError extends Schema.TaggedError<XmltvParseError>()(
   { message: Schema.String },
 ) {}
 
+export class IptvUrlPolicyError extends Schema.TaggedError<IptvUrlPolicyError>()(
+  "IptvUrlPolicyError",
+  { resource: Schema.String, message: Schema.String },
+) {}
+
+export class IptvRedirectError extends Schema.TaggedError<IptvRedirectError>()(
+  "IptvRedirectError",
+  { resource: Schema.String, message: Schema.String },
+) {}
+
+export class StalkerAuthenticationError extends Schema.TaggedError<StalkerAuthenticationError>()(
+  "StalkerAuthenticationError",
+  { message: Schema.String },
+) {}
+
+export class StalkerPortalError extends Schema.TaggedError<StalkerPortalError>()(
+  "StalkerPortalError",
+  { resource: Schema.String, message: Schema.String },
+) {}
+
 export type IptvClientError =
   | IptvInvalidUrlError
   | IptvTransportError
@@ -60,6 +80,10 @@ export type IptvClientError =
   | XtreamAuthenticationError
   | M3uParseError
   | XmltvParseError
+  | IptvUrlPolicyError
+  | IptvRedirectError
+  | StalkerAuthenticationError
+  | StalkerPortalError
 
 export function isIptvClientError(error: unknown): error is IptvClientError {
   if (!(error instanceof Error) || typeof error !== "object" || error === null) return false
@@ -77,4 +101,8 @@ const IPTV_ERROR_TAGS = new Set([
   "XtreamAuthenticationError",
   "M3uParseError",
   "XmltvParseError",
+  "IptvUrlPolicyError",
+  "IptvRedirectError",
+  "StalkerAuthenticationError",
+  "StalkerPortalError",
 ])

@@ -13,9 +13,10 @@ import {
   type MovieId,
   type SeriesId,
   type StreamFormat,
+  type XtreamCatchupVariant,
 } from "./Schemas.js"
 import { IptvInvalidUrlError, IptvResponseValidationError, XtreamAuthenticationError } from "./Errors.js"
-import type { XtreamCredentials } from "./Types.js"
+import type { XtreamCatchupOptions, XtreamCredentials } from "./Types.js"
 
 type ContentKind = "live" | "movie" | "series"
 type UnknownRecord = Record<string, unknown>
@@ -104,6 +105,7 @@ export function timeshiftUrl(
   channelId: ChannelId | string,
   start: Date,
   durationSeconds: number,
+  options: XtreamCatchupOptions = {},
 ): string {
   if (Number.isNaN(start.getTime()) || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
     throw new IptvResponseValidationError({
@@ -111,17 +113,35 @@ export function timeshiftUrl(
       message: "Timeshift requires a valid start date and positive duration",
     })
   }
-  const iso = start.toISOString()
-  const timestamp = `${iso.slice(0, 10)}:${iso.slice(11, 16).replace(":", "-")}`
+  const timestamp = formatCatchupStart(start, options.serverTimezone)
+  const durationMinutes = Math.max(1, Math.round(durationSeconds / 60))
+  const variant = options.variant ?? "rest-ts"
+  const extension = variant.endsWith("m3u8") ? "m3u8" : "ts"
+  if (variant.startsWith("legacy")) {
+    const url = new URL("streaming/timeshift.php", `${credentials.baseUrl}/`)
+    url.searchParams.set("username", credentials.username)
+    url.searchParams.set("password", credentials.password)
+    url.searchParams.set("stream", String(channelId))
+    url.searchParams.set("start", timestamp)
+    url.searchParams.set("duration", String(durationMinutes))
+    url.searchParams.set("extension", extension)
+    return url.toString()
+  }
   const path = [
     "timeshift",
     encodeURIComponent(credentials.username),
     encodeURIComponent(credentials.password),
-    Math.ceil(durationSeconds),
+    durationMinutes,
     timestamp,
-    `${encodeURIComponent(String(channelId))}.ts`,
+    `${encodeURIComponent(String(channelId))}.${extension}`,
   ].join("/")
   return new URL(path, `${credentials.baseUrl}/`).toString()
+}
+
+export function catchupVariantCandidates(format: StreamFormat = "m3u8"): readonly XtreamCatchupVariant[] {
+  return format === "m3u8"
+    ? ["rest-m3u8", "rest-ts", "legacy-m3u8", "legacy-ts"]
+    : ["rest-ts", "rest-m3u8", "legacy-ts", "legacy-m3u8"]
 }
 
 export function normalizeProfile(input: unknown): XtreamProfile {
@@ -302,7 +322,15 @@ function seriesFor(item: UnknownRecord): IptvSeries {
 }
 
 export function normalizeShortEpg(channelId: ChannelId | string, input: unknown): IptvGuide {
-  const root = asRecord(input, "Xtream short EPG")
+  return normalizeEpg(channelId, input, "Xtream short EPG")
+}
+
+export function normalizeFullEpg(channelId: ChannelId | string, input: unknown): IptvGuide {
+  return normalizeEpg(channelId, input, "Xtream full EPG")
+}
+
+function normalizeEpg(channelId: ChannelId | string, input: unknown, resource: string): IptvGuide {
+  const root = asRecord(input, resource)
   const values = Array.isArray(root.epg_listings) ? root.epg_listings : []
   const programmes = values.map((value) => {
     const item = asRecord(value, "Xtream EPG programme")
@@ -310,7 +338,7 @@ export function normalizeShortEpg(channelId: ChannelId | string, input: unknown)
     const end = timestamp(item.stop_timestamp) ?? dateValue(item.end)
     if (start === undefined) {
       throw new IptvResponseValidationError({
-        resource: "Xtream short EPG",
+        resource,
         message: "EPG programme is missing a valid start time",
       })
     }
@@ -326,7 +354,34 @@ export function normalizeShortEpg(channelId: ChannelId | string, input: unknown)
   return decode(IptvGuide, {
     channels: [{ id: channelId, displayNames: [String(channelId)], urls: [] }],
     programmes,
-  }, "Xtream short EPG")
+  }, resource)
+}
+
+function formatCatchupStart(start: Date, timezone = "UTC"): string {
+  let parts: Intl.DateTimeFormatPart[]
+  try {
+    parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(start)
+  } catch {
+    parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "UTC",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(start)
+  }
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "00"
+  return `${value("year")}-${value("month")}-${value("day")}:${value("hour")}-${value("minute")}`
 }
 
 function ids(value: unknown, fallback: unknown): string[] {

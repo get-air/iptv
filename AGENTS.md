@@ -6,8 +6,12 @@
 - Use `@get-air/http` for all network calls and `@get-air/cache` with the
   package-owned `@get-air/iptv` namespace for optional serialized caching.
 - Never store or log Xtream usernames, passwords, or credential-bearing URLs.
+- Keep Stalker bearer tokens memory-only. Custom search adapters must protect
+  entity payloads because playback headers can contain session credentials.
 - Decode every provider response at the boundary. Xtream-compatible servers are
   inconsistent, so normalize accepted variants into stable branded domain types.
 - Keep this repository independent. Do not add workspace or local-file dependencies.
+- Shared cache entries may contain serialized provider responses only. Favorites,
+  history, source registries, and installed-provider state remain application data.
 - Do not publish from a development task. CI may build and inspect the package;
   releases require an explicit later request.

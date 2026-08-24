@@ -26,9 +26,11 @@ function transport(counter: { value: number }) {
       counter.value += 1
       const url = new URL(request.url)
       const action = url.searchParams.get("action")
-      expect(url.searchParams.get("username")).toBe(credentials.username)
-      expect(url.searchParams.get("password")).toBe(credentials.password)
-      if (action === null) {
+      if (url.pathname.endsWith("/player_api.php")) {
+        expect(url.searchParams.get("username")).toBe(credentials.username)
+        expect(url.searchParams.get("password")).toBe(credentials.password)
+      }
+      if (action === null && url.pathname.endsWith("/player_api.php")) {
         return Response.json({
           user_info: {
             auth: "1",
@@ -116,6 +118,20 @@ function transport(counter: { value: number }) {
           stop_timestamp: "1787533600",
         }] })
       }
+      if (action === "get_simple_data_table") return Response.json({ epg_listings: [] })
+      if (action === "get_simple_date_table") {
+        return Response.json({ epg_listings: [{
+          title: btoa("Legacy Full EPG"),
+          start_timestamp: "1787530000",
+          stop_timestamp: "1787533600",
+        }] })
+      }
+      if (url.pathname.endsWith(".m3u8") && url.pathname.includes("/timeshift/")) {
+        return new Response(null, { status: 404 })
+      }
+      if (url.pathname.endsWith(".ts") && url.pathname.includes("/timeshift/")) {
+        return new Response(null, { status: 206 })
+      }
       return new Response("missing", { status: 404 })
     },
   }
@@ -150,7 +166,7 @@ describe("Xtream-compatible providers", () => {
     expect(xtream.playlistUrl()).toContain("/get.php?")
     expect(xtream.xmltvUrl()).toContain("/xmltv.php?")
     expect(xtream.timeshiftUrl("101", new Date("2026-08-24T01:30:00Z"), 3600)).toContain(
-      "/timeshift/viewer%40example.test/secret%20value/3600/2026-08-24:01-30/101.ts",
+      "/timeshift/viewer%40example.test/secret%20value/60/2026-08-24:01-30/101.m3u8",
     )
 
     const beforeCachedRead = counter.value
@@ -161,6 +177,18 @@ describe("Xtream-compatible providers", () => {
 
     const epg = await xtream.shortEpg({ channelId: "101", limit: 2 })
     expect(epg.programmes[0]).toMatchObject({ title: "News Hour", description: "Headlines" })
+    const fullEpg = await xtream.fullEpg("101")
+    expect(fullEpg.programmes[0]?.title).toBe("Legacy Full EPG")
+
+    const resolvedCatchup = await xtream.resolveTimeshiftUrl(
+      "101",
+      new Date("2026-08-24T01:30:00Z"),
+      3600,
+    )
+    expect(resolvedCatchup).toContain("/60/2026-08-24:01-30/101.ts")
+    const beforeCachedCatchup = counter.value
+    await xtream.resolveTimeshiftUrl("101", new Date("2026-08-24T01:30:00Z"), 3600)
+    expect(counter.value).toBe(beforeCachedCatchup)
 
     const movies = await xtream.movies({ categoryId: "8" })
     expect(movies[0]).toMatchObject({

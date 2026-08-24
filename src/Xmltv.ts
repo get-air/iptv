@@ -18,6 +18,9 @@ export const parseXmltv = Effect.fn("IptvClient.parseXmltv")((
   const value = yield* Effect.try({
     try: () => {
     const document = parseXmltvDocument(text)
+    if ((document.channels ?? []).length === 0) {
+      throw new XmltvParseError({ message: "XMLTV guide produced no channels" })
+    }
     return {
       channels: (document.channels ?? []).map((channel) => ({
         id: channel.id,

@@ -1,10 +1,15 @@
 {
   "name": "@get-air/iptv",
   "version": "0.1.0",
-  "description": "Type-safe Promise and Effect toolkit for Xtream, M3U, and XMLTV IPTV sources",
+  "description": "Type-safe Promise and Effect toolkit for Xtream, Stalker, M3U, XMLTV, and IPTV search",
   "type": "module",
   "sideEffects": false,
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,8 +24,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check": "effect-language-service diagnostics --project tsconfig.json --strict --format text && tsc -p tsconfig.json --noEmit",
-    "ci": "npm run check && npm test && npm run build && npm pack --dry-run --ignore-scripts",
+    "ci": "npm run check && npm test && npm run build && npm run check:exports && npm pack --dry-run --ignore-scripts",
     "ci:act": "act push --job ci",
+    "check:exports": "node scripts/check-exports.mjs",
     "prepack": "npm run build",
     "test": "vitest run"
   },
@@ -28,7 +34,8 @@
     "@get-air/cache": "^0.1.0",
     "@get-air/http": "^0.1.0",
     "@iptv/xmltv": "^1.0.1",
-    "effect": "^3.22.1"
+    "effect": "^3.22.1",
+    "saxes": "^6.0.0"
   },
   "devDependencies": {
     "@effect/language-service": "^0.87.2",
@@ -52,5 +59,16 @@
     "provenance": true,
     "registry": "https://registry.npmjs.org/"
   },
-  "keywords": ["iptv", "xtream", "m3u", "xmltv", "epg", "effect", "typescript"]
+  "keywords": [
+    "iptv",
+    "xtream",
+    "stalker",
+    "ministra",
+    "m3u",
+    "xmltv",
+    "epg",
+    "search",
+    "effect",
+    "typescript"
+  ]
 }
