@@ -1,0 +1,56 @@
+{
+  "name": "@get-air/iptv",
+  "version": "0.1.0",
+  "description": "Type-safe Promise and Effect toolkit for Xtream, M3U, and XMLTV IPTV sources",
+  "type": "module",
+  "sideEffects": false,
+  "files": ["dist", "README.md", "LICENSE"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./effect": {
+      "types": "./dist/effect.d.ts",
+      "import": "./dist/effect.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "effect-language-service diagnostics --project tsconfig.json --strict --format text && tsc -p tsconfig.json --noEmit",
+    "ci": "npm run check && npm test && npm run build && npm pack --dry-run --ignore-scripts",
+    "ci:act": "act push --job ci",
+    "prepack": "npm run build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@get-air/cache": "^0.1.0",
+    "@get-air/http": "^0.1.0",
+    "@iptv/xmltv": "^1.0.1",
+    "effect": "^3.22.1"
+  },
+  "devDependencies": {
+    "@effect/language-service": "^0.87.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/get-air/iptv.git"
+  },
+  "bugs": {
+    "url": "https://github.com/get-air/iptv/issues"
+  },
+  "homepage": "https://github.com/get-air/iptv#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": ["iptv", "xtream", "m3u", "xmltv", "epg", "effect", "typescript"]
+}

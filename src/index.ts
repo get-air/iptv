@@ -1,0 +1,52 @@
+export { createIptvClient } from "./PromiseClient.js"
+export {
+  IptvHttpStatusError,
+  IptvInvalidJsonError,
+  IptvInvalidUrlError,
+  IptvResponseTooLargeError,
+  IptvResponseValidationError,
+  IptvTransportError,
+  M3uParseError,
+  XmltvParseError,
+  XtreamAuthenticationError,
+  isIptvClientError,
+} from "./Errors.js"
+
+export type {
+  CategoryId,
+  ChannelId,
+  EpgChannel,
+  EpgChannelId,
+  EpgNowNext,
+  EpgProgramme,
+  EpisodeId,
+  IptvCategory,
+  IptvChannel,
+  IptvEpisode,
+  IptvGuide,
+  IptvHeaders,
+  IptvMovie,
+  IptvPlaylist,
+  IptvPlaylistEntry,
+  IptvSeries,
+  IptvSeriesDetails,
+  MovieId,
+  PlaylistEntryId,
+  SeriesId,
+  StreamFormat,
+  XtreamAccount,
+  XtreamProfile,
+  XtreamServer,
+} from "./Schemas.js"
+export type {
+  CatalogOptions,
+  IptvCallOptions,
+  IptvClient,
+  IptvClientConfig,
+  M3uParseOptions,
+  ShortEpgOptions,
+  XmltvParseOptions,
+  XtreamClient,
+  XtreamCredentials,
+} from "./Types.js"
+export type { IptvClientError } from "./Errors.js"
